@@ -1,839 +1,1379 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wheelhouse — Spin, Pick, Team Up</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<style>
-:root{
-  --ink:#171310; --panel:#211b16; --panel2:#2a231c; --brass:#c9a24b; --brass-dim:#8a7038;
-  --red:#b23a2e; --teal:#3e7d71; --paper:#f3ead8; --muted:#a89c8a; --line:#3a322a;
-  --danger:#b23a2e; --radius:14px;
-}
-*{box-sizing:border-box;}
-body{margin:0;background:var(--ink);color:var(--paper);font-family:'Space Grotesk',sans-serif;min-height:100vh;}
-h1,h2,h3,.display{font-family:'Anton',sans-serif;letter-spacing:.03em;text-transform:uppercase;font-weight:400;}
-.mono{font-family:'JetBrains Mono',monospace;}
-.hidden{display:none !important;}
-.muted{color:var(--muted);}
-.small{font-size:12.5px;}
-button{font-family:inherit;cursor:pointer;}
-.app{max-width:1400px;margin:0 auto;padding:0 18px 60px;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wheelhouse — Spin, Pick, Team Up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root {
+      --ink: #171310;
+      --panel: #211b16;
+      --panel2: #2a231c;
+      --brass: #c9a24b;
+      --brass-dim: #8a7038;
+      --red: #b23a2e;
+      --teal: #3e7d71;
+      --paper: #f3ead8;
+      --muted: #a89c8a;
+      --line: #3a322a;
+      --danger: #b23a2e;
+      --radius: 14px;
+    }
 
-/* ---------- Topbar ---------- */
-.topbar{display:flex;align-items:center;gap:20px;padding:18px 4px;border-bottom:2px solid var(--line);flex-wrap:wrap;}
-.brand{font-family:'Anton',sans-serif;font-size:26px;letter-spacing:.06em;display:flex;align-items:center;gap:8px;}
-.brand-mark{color:var(--brass);font-size:28px;}
-.tabs{display:flex;gap:6px;margin-left:10px;}
-.tab{background:transparent;border:1px solid var(--line);color:var(--muted);padding:9px 18px;border-radius:999px;font-size:14px;font-weight:600;transition:.15s;}
-.tab.active{background:var(--brass);border-color:var(--brass);color:#171310;}
-.share-controls{margin-left:auto;display:flex;align-items:center;gap:12px;}
-.live-badge{display:flex;align-items:center;gap:8px;background:rgba(178,58,46,.15);border:1px solid var(--red);color:#e8a49c;padding:6px 14px;border-radius:999px;font-size:13px;}
-.live-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1.4s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    * {
+      box-sizing: border-box;
+    }
 
-.btn{border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--paper);padding:10px 16px;font-weight:600;font-size:14px;}
-.btn:hover{border-color:var(--brass-dim);}
-.btn.brass{background:var(--brass);color:#171310;border-color:var(--brass);}
-.btn.brass:hover{background:#dcb45f;}
-.btn.teal{background:var(--teal);color:#0d1a17;border-color:var(--teal);}
-.btn.red{background:var(--red);color:#fff;border-color:var(--red);}
-.btn.ghost{background:transparent;}
-.btn.small{padding:7px 12px;font-size:12.5px;}
-.btn.big{padding:16px 40px;font-size:18px;letter-spacing:.04em;}
-.btn:disabled{opacity:.4;cursor:not-allowed;}
+    body {
+      margin: 0;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
 
-/* ---------- Ticket panel (perforated) ---------- */
-.ticket{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;position:relative;}
-.ticket::before,.ticket::after{content:"";position:absolute;left:0;right:0;height:10px;
-  background-image:radial-gradient(circle 5px, var(--ink) 5px, transparent 5.5px);
-  background-size:20px 10px;background-repeat:repeat-x;}
-.ticket::before{top:-1px;}
-.ticket::after{bottom:-1px;transform:rotate(180deg);}
-.ticket h2{font-size:15px;color:var(--brass);margin:18px 0 10px;}
-.ticket h2:first-child{margin-top:0;}
+    h1,
+    h2,
+    h3,
+    .display {
+      font-family: 'Anton', sans-serif;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
 
-/* ---------- Layout: wheel tab ---------- */
-#wheelTab{display:grid;grid-template-columns:300px 1fr 300px;gap:18px;margin-top:22px;align-items:start;}
-@media (max-width:1100px){#wheelTab{grid-template-columns:1fr;} }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
 
-.chip-row{display:flex;flex-wrap:wrap;gap:6px;}
-.chip{border:1px solid var(--line);background:var(--panel2);color:var(--muted);padding:6px 11px;border-radius:999px;font-size:12px;}
-.chip:hover{color:var(--paper);border-color:var(--brass-dim);}
-.chip.active{background:var(--brass);color:#171310;border-color:var(--brass);}
+    .hidden {
+      display: none !important;
+    }
 
-textarea{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:8px;color:var(--paper);padding:10px;font-family:inherit;font-size:13px;resize:vertical;min-height:64px;}
-.import-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+    .muted {
+      color: var(--muted);
+    }
 
-.entry-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin:10px 0;}
-.entry-row{display:flex;align-items:center;gap:6px;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;}
-.entry-row .swatch{width:14px;height:14px;border-radius:50%;flex:none;border:1px solid rgba(255,255,255,.2);}
-.entry-row input[type=text]{flex:1;background:transparent;border:none;color:var(--paper);font-size:13px;outline:none;min-width:0;}
-.entry-row input[type=number]{width:52px;background:transparent;border:1px solid var(--line);border-radius:6px;color:var(--paper);font-size:12px;padding:3px;}
-.entry-row .icon-btn{background:transparent;border:none;color:var(--muted);font-size:14px;padding:2px 4px;}
-.entry-row .icon-btn:hover{color:var(--red);}
+    .small {
+      font-size: 12.5px;
+    }
 
-.toggle{display:flex;align-items:center;gap:8px;font-size:13px;margin:8px 0;color:var(--paper);}
-select{background:var(--ink);color:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px;font-family:inherit;font-size:13px;width:100%;}
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
 
-/* ---------- Wheel stage ---------- */
-.wheel-stage{display:flex;flex-direction:column;align-items:center;gap:16px;}
-.wheel-wrap{position:relative;width:min(100%,480px);}
-canvas#wheelCanvas{width:100%;height:auto;display:block;filter:drop-shadow(0 10px 30px rgba(0,0,0,.5));}
-.pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);font-size:34px;color:var(--red);z-index:5;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));}
-.result-banner{background:var(--panel2);border:1px solid var(--brass);border-radius:12px;padding:14px 26px;font-family:'Anton',sans-serif;font-size:22px;text-align:center;color:var(--brass);letter-spacing:.03em;min-width:200px;}
-.history{width:100%;max-width:480px;}
-.history h3{font-size:13px;color:var(--muted);margin:4px 0 8px;font-family:'Space Grotesk';text-transform:none;letter-spacing:0;font-weight:600;}
-.history-list{display:flex;flex-direction:column;gap:5px;max-height:150px;overflow-y:auto;}
-.history-item{display:flex;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12.5px;}
-.stage-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 18px 60px;
+    }
 
-/* ---------- Share panel ---------- */
-.share-link-box{display:flex;gap:6px;margin:10px 0;}
-.share-link-box input{flex:1;background:var(--ink);border:1px solid var(--line);border-radius:8px;color:var(--paper);padding:8px;font-size:12px;font-family:'JetBrains Mono';}
-.countdown{font-family:'JetBrains Mono';font-size:28px;color:var(--brass);text-align:center;margin:10px 0;}
-.viewer-banner{background:rgba(62,125,113,.15);border:1px solid var(--teal);color:#bfe3da;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;}
+    /* ---------- Topbar ---------- */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 18px 4px;
+      border-bottom: 2px solid var(--line);
+      flex-wrap: wrap;
+    }
 
-/* ---------- Team tab ---------- */
-#teamTab{margin-top:22px;display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start;}
-@media (max-width:1000px){#teamTab{grid-template-columns:1fr;}}
-.src-group{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;}
-.src-group-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
-.src-group-head input{background:transparent;border:none;color:var(--brass);font-weight:700;font-size:13px;outline:none;}
-.field-row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;}
-.field{flex:1;min-width:110px;}
-.field label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px;}
-.field input,.field select{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:8px;color:var(--paper);padding:8px;font-size:13px;}
-.rules-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12.5px;}
-.rules-table td,.rules-table th{padding:6px;border-bottom:1px solid var(--line);text-align:left;}
-.rules-table input{width:60px;background:var(--ink);border:1px solid var(--line);border-radius:6px;color:var(--paper);padding:4px;}
-.team-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:16px;}
-.team-card{background:var(--panel);border:1px solid var(--brass-dim);border-radius:12px;padding:14px;}
-.team-card h3{font-size:15px;color:var(--brass);margin:0 0 8px;font-family:'Anton';}
-.team-card ul{margin:0;padding-left:18px;font-size:13px;line-height:1.6;}
-.export-row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
-#resultsExportTarget{background:var(--ink);}
-</style>
+    .brand {
+      font-family: 'Anton', sans-serif;
+      font-size: 26px;
+      letter-spacing: .06em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-mark {
+      color: var(--brass);
+      font-size: 28px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-left: 10px;
+    }
+
+    .tab {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      padding: 9px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: .15s;
+    }
+
+    .tab.active {
+      background: var(--brass);
+      border-color: var(--brass);
+      color: #171310;
+    }
+
+    .share-controls {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(178, 58, 46, .15);
+      border: 1px solid var(--red);
+      color: #e8a49c;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .3
+      }
+    }
+
+    .btn {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      color: var(--paper);
+      padding: 10px 16px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      border-color: var(--brass-dim);
+    }
+
+    .btn.brass {
+      background: var(--brass);
+      color: #171310;
+      border-color: var(--brass);
+    }
+
+    .btn.brass:hover {
+      background: #dcb45f;
+    }
+
+    .btn.teal {
+      background: var(--teal);
+      color: #0d1a17;
+      border-color: var(--teal);
+    }
+
+    .btn.red {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
+    }
+
+    .btn.ghost {
+      background: transparent;
+    }
+
+    .btn.small {
+      padding: 7px 12px;
+      font-size: 12.5px;
+    }
+
+    .btn.big {
+      padding: 16px 40px;
+      font-size: 18px;
+      letter-spacing: .04em;
+    }
+
+    .btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    /* ---------- Ticket panel (perforated) ---------- */
+    .ticket {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+    }
+
+    .ticket::before,
+    .ticket::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background-image: radial-gradient(circle 5px, var(--ink) 5px, transparent 5.5px);
+      background-size: 20px 10px;
+      background-repeat: repeat-x;
+    }
+
+    .ticket::before {
+      top: -1px;
+    }
+
+    .ticket::after {
+      bottom: -1px;
+      transform: rotate(180deg);
+    }
+
+    .ticket h2 {
+      font-size: 15px;
+      color: var(--brass);
+      margin: 18px 0 10px;
+    }
+
+    .ticket h2:first-child {
+      margin-top: 0;
+    }
+
+    /* ---------- Layout: wheel tab ---------- */
+    #wheelTab {
+      display: grid;
+      grid-template-columns: 300px 1fr 300px;
+      gap: 18px;
+      margin-top: 22px;
+      align-items: start;
+    }
+
+    @media (max-width:1100px) {
+      #wheelTab {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      color: var(--muted);
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .chip:hover {
+      color: var(--paper);
+      border-color: var(--brass-dim);
+    }
+
+    .chip.active {
+      background: var(--brass);
+      color: #171310;
+      border-color: var(--brass);
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--paper);
+      padding: 10px;
+      font-family: inherit;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 64px;
+    }
+
+    .import-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .entry-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 280px;
+      overflow-y: auto;
+      margin: 10px 0;
+    }
+
+    .entry-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+
+    .entry-row .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex: none;
+      border: 1px solid rgba(255, 255, 255, .2);
+    }
+
+    .entry-row input[type=text] {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--paper);
+      font-size: 13px;
+      outline: none;
+      min-width: 0;
+    }
+
+    .entry-row input[type=number] {
+      width: 52px;
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--paper);
+      font-size: 12px;
+      padding: 3px;
+    }
+
+    .entry-row .icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 2px 4px;
+    }
+
+    .entry-row .icon-btn:hover {
+      color: var(--red);
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      margin: 8px 0;
+      color: var(--paper);
+    }
+
+    select {
+      background: var(--ink);
+      color: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    /* ---------- Wheel stage ---------- */
+    .wheel-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .wheel-wrap {
+      position: relative;
+      width: min(100%, 480px);
+    }
+
+    canvas#wheelCanvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 10px 30px rgba(0, 0, 0, .5));
+    }
+
+    .pointer {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 34px;
+      color: var(--red);
+      z-index: 5;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .6));
+    }
+
+    .result-banner {
+      background: var(--panel2);
+      border: 1px solid var(--brass);
+      border-radius: 12px;
+      padding: 14px 26px;
+      font-family: 'Anton', sans-serif;
+      font-size: 22px;
+      text-align: center;
+      color: var(--brass);
+      letter-spacing: .03em;
+      min-width: 200px;
+    }
+
+    .history {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .history h3 {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 4px 0 8px;
+      font-family: 'Space Grotesk';
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 600;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+    }
+
+    .stage-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    /* ---------- Share panel ---------- */
+    .share-link-box {
+      display: flex;
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    .share-link-box input {
+      flex: 1;
+      background: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--paper);
+      padding: 8px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono';
+    }
+
+    .countdown {
+      font-family: 'JetBrains Mono';
+      font-size: 28px;
+      color: var(--brass);
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    .viewer-banner {
+      background: rgba(62, 125, 113, .15);
+      border: 1px solid var(--teal);
+      color: #bfe3da;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    /* ---------- Team tab ---------- */
+    #teamTab {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width:1000px) {
+      #teamTab {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .src-group {
+      background: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .src-group-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .src-group-head input {
+      background: transparent;
+      border: none;
+      color: var(--brass);
+      font-weight: 700;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      flex: 1;
+      min-width: 110px;
+    }
+
+    .field label {
+      font-size: 11.5px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      background: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--paper);
+      padding: 8px;
+      font-size: 13px;
+    }
+
+    .rules-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 12.5px;
+    }
+
+    .rules-table td,
+    .rules-table th {
+      padding: 6px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .rules-table input {
+      width: 60px;
+      background: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--paper);
+      padding: 4px;
+    }
+
+    .team-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .team-card {
+      background: var(--panel);
+      border: 1px solid var(--brass-dim);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .team-card h3 {
+      font-size: 15px;
+      color: var(--brass);
+      margin: 0 0 8px;
+      font-family: 'Anton';
+    }
+
+    .team-card ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .export-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    #resultsExportTarget {
+      background: var(--ink);
+    }
+  </style>
 </head>
+
 <body>
-<div class="app">
-  <div class="topbar">
-    <div class="brand"><span class="brand-mark">◎</span>WHEELHOUSE</div>
-    <nav class="tabs">
-      <button class="tab active" data-tab="wheel">Wheel</button>
-      <button class="tab" data-tab="team">Team Picker</button>
-    </nav>
-    <div class="share-controls">
-      <div id="liveBadge" class="live-badge hidden"><span class="live-dot"></span><span id="liveBadgeText" class="mono"></span></div>
-      <button id="shareBtn" class="btn brass">Share Live</button>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-mark">◎</span>WHEELHOUSE</div>
+      <nav class="tabs">
+        <button class="tab active" data-tab="wheel">Wheel</button>
+        <button class="tab" data-tab="team">Team Picker</button>
+      </nav>
+      <div class="share-controls">
+        <div id="liveBadge" class="live-badge hidden"><span class="live-dot"></span><span id="liveBadgeText"
+            class="mono"></span></div>
+        <button id="shareBtn" class="btn brass">Share Live</button>
+      </div>
     </div>
-  </div>
 
-  <div id="viewerBannerHolder"></div>
+    <div id="viewerBannerHolder"></div>
 
-  <!-- WHEEL TAB -->
-  <main id="wheelTab">
-    <aside class="ticket">
-      <h2>Presets</h2>
-      <div class="chip-row" id="presetChips"></div>
+    <!-- WHEEL TAB -->
+    <main id="wheelTab">
+      <aside class="ticket">
+        <h2>Presets</h2>
+        <div class="chip-row" id="presetChips"></div>
 
-      <h2>Entries</h2>
-      <div class="import-row">
-        <label class="btn ghost small">CSV<input type="file" id="importCSV" accept=".csv" hidden></label>
-        <label class="btn ghost small">Excel<input type="file" id="importXLSX" accept=".xlsx,.xls" hidden></label>
-        <label class="btn ghost small">Word<input type="file" id="importDOCX" accept=".docx" hidden></label>
-        <label class="btn ghost small">PDF<input type="file" id="importPDF" accept=".pdf" hidden></label>
-      </div>
-      <textarea id="bulkPaste" placeholder="Paste items, one per line, then click Add below…"></textarea>
-      <div style="margin:8px 0;"><button id="bulkAddBtn" class="btn ghost small">+ Add pasted lines</button></div>
-      <div class="entry-list" id="entryList"></div>
-      <button id="addEntryBtn" class="btn ghost small">+ Add item</button>
+        <h2>Entries</h2>
+        <div class="import-row">
+          <label class="btn ghost small">CSV<input type="file" id="importCSV" accept=".csv" hidden></label>
+          <label class="btn ghost small">Excel<input type="file" id="importXLSX" accept=".xlsx,.xls" hidden></label>
+          <label class="btn ghost small">Word<input type="file" id="importDOCX" accept=".docx" hidden></label>
+          <label class="btn ghost small">PDF<input type="file" id="importPDF" accept=".pdf" hidden></label>
+        </div>
+        <textarea id="bulkPaste" placeholder="Paste items, one per line, then click Add below…"></textarea>
+        <div style="margin:8px 0;"><button id="bulkAddBtn" class="btn ghost small">+ Add pasted lines</button></div>
+        <div class="entry-list" id="entryList"></div>
+        <button id="addEntryBtn" class="btn ghost small">+ Add item</button>
 
-      <h2>Options</h2>
-      <label class="toggle"><input type="checkbox" id="optWeighted"> Weighted slices</label>
-      <div class="field" style="margin-bottom:6px;">
-        <label>After each spin</label>
-        <select id="repeatMode">
-          <option value="keep">Keep all entries</option>
-          <option value="norepeat">Remove winner (No-Repeat)</option>
-          <option value="elimination">Eliminate winner (last one standing wins)</option>
-        </select>
-      </div>
-      <label class="toggle"><input type="checkbox" id="optMultiStage"> Multi-stage wheel</label>
-      <div id="stageManager" class="hidden"></div>
-    </aside>
-
-    <section class="wheel-stage">
-      <div class="wheel-wrap">
-        <div class="pointer">▼</div>
-        <canvas id="wheelCanvas" width="520" height="520"></canvas>
-      </div>
-      <button id="spinBtn" class="btn brass big">SPIN</button>
-      <div id="resultBanner" class="result-banner hidden"></div>
-      <div class="history">
-        <h3>History</h3>
-        <div class="history-list" id="historyList"></div>
-      </div>
-    </section>
-
-    <aside class="ticket" id="sharePanel">
-      <h2>Live Share</h2>
-      <p class="muted small">Generate a link that mirrors this wheel on another device for up to 120 minutes. Closing this tab, letting it time out, or hitting Stop ends the session for everyone.</p>
-      <div id="shareArea"></div>
-    </aside>
-  </main>
-
-  <!-- TEAM TAB -->
-  <main id="teamTab" class="hidden">
-    <aside class="ticket">
-      <h2>Source Groups</h2>
-      <div id="srcGroupList"></div>
-      <button id="addSrcGroupBtn" class="btn ghost small">+ Add source group</button>
-
-      <h2>Grouping Rule</h2>
-      <div class="field-row">
-        <div class="field">
-          <label>Split by</label>
-          <select id="splitMode">
-            <option value="groups">Number of groups</option>
-            <option value="maxsize">Max people / group</option>
+        <h2>Options</h2>
+        <label class="toggle"><input type="checkbox" id="optWeighted"> Weighted slices</label>
+        <div class="field" style="margin-bottom:6px;">
+          <label>After each spin</label>
+          <select id="repeatMode">
+            <option value="keep">Keep all entries</option>
+            <option value="norepeat">Remove winner (No-Repeat)</option>
+            <option value="elimination">Eliminate winner (last one standing wins)</option>
           </select>
         </div>
-        <div class="field">
-          <label id="splitValueLabel">Number of groups</label>
-          <input type="number" id="splitValue" value="2" min="1">
+        <label class="toggle"><input type="checkbox" id="optMultiStage"> Multi-stage wheel</label>
+        <div id="stageManager" class="hidden"></div>
+      </aside>
+
+      <section class="wheel-stage">
+        <div class="wheel-wrap">
+          <div class="pointer">▼</div>
+          <canvas id="wheelCanvas" width="520" height="520"></canvas>
         </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Pick quantity (optional cap)</label>
-          <input type="number" id="pickQuantity" placeholder="use everyone">
+        <button id="spinBtn" class="btn brass big">SPIN</button>
+        <div id="resultBanner" class="result-banner hidden"></div>
+        <div class="history">
+          <h3>History</h3>
+          <div class="history-list" id="historyList"></div>
         </div>
-      </div>
-      <div class="field">
-        <label>Team names (comma separated, optional)</label>
-        <input type="text" id="teamNames" placeholder="e.g. Falcons, Wolves, Bears">
-      </div>
+      </section>
 
-      <h2>Per-team ratio rules <span class="muted small">(optional)</span></h2>
-      <table class="rules-table" id="rulesTable"><tbody></tbody></table>
-      <p class="muted small">Leave blank to split each source group evenly across teams.</p>
+      <aside class="ticket" id="sharePanel">
+        <h2>Live Share</h2>
+        <p class="muted small">Generate a link that mirrors this wheel on another device for up to 120 minutes. Closing
+          this tab, letting it time out, or hitting Stop ends the session for everyone.</p>
+        <div id="shareArea"></div>
+      </aside>
+    </main>
 
-      <button id="generateTeamsBtn" class="btn brass" style="width:100%;margin-top:14px;">Generate Groups</button>
-    </aside>
+    <!-- TEAM TAB -->
+    <main id="teamTab" class="hidden">
+      <aside class="ticket">
+        <h2>Source Groups</h2>
+        <div id="srcGroupList"></div>
+        <button id="addSrcGroupBtn" class="btn ghost small">+ Add source group</button>
 
-    <section>
-      <div id="resultsExportTarget">
-        <div class="team-results" id="teamResults"></div>
-        <div id="extrasBox"></div>
-      </div>
-      <div class="export-row">
-        <button id="exportImgBtn" class="btn ghost small">Export as Image</button>
-        <button id="exportXlsxBtn" class="btn ghost small">Export as Excel</button>
-        <button id="exportPdfBtn" class="btn ghost small">Export as PDF</button>
-      </div>
-    </section>
-  </main>
-</div>
+        <h2>Grouping Rule</h2>
+        <div class="field-row">
+          <div class="field">
+            <label>Split by</label>
+            <select id="splitMode">
+              <option value="groups">Number of groups</option>
+              <option value="maxsize">Max people / group</option>
+            </select>
+          </div>
+          <div class="field">
+            <label id="splitValueLabel">Number of groups</label>
+            <input type="number" id="splitValue" value="2" min="1">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Pick quantity (optional cap)</label>
+            <input type="number" id="pickQuantity" placeholder="use everyone">
+          </div>
+        </div>
+        <div class="field">
+          <label>Team names (comma separated, optional)</label>
+          <input type="text" id="teamNames" placeholder="e.g. Falcons, Wolves, Bears">
+        </div>
 
-<script>
-(function(){
-"use strict";
+        <h2>Per-team ratio rules <span class="muted small">(optional)</span></h2>
+        <table class="rules-table" id="rulesTable">
+          <tbody></tbody>
+        </table>
+        <p class="muted small">Leave blank to split each source group evenly across teams.</p>
 
-/* ============================= PRESETS ============================= */
-const PALETTE = ['#c9a24b','#b23a2e','#3e7d71','#7c6fb0','#4c86a8','#d98a3d','#8faf4b','#b0507c'];
-const COLOR_HEX = {Red:'#e0483b',Blue:'#2f7fd1',Green:'#4a9d5c',Yellow:'#e0c23c',Purple:'#8b5fbf',
-  Orange:'#e08a3d',Pink:'#e0679c',Teal:'#3e9d92',Brown:'#7a5540',Black:'#222222',White:'#eeeeee',Gray:'#8b8b8b'};
+        <button id="generateTeamsBtn" class="btn brass" style="width:100%;margin-top:14px;">Generate Groups</button>
+      </aside>
 
-const PRESETS = {
-  custom:   {name:'Custom',        items:['Item 1','Item 2','Item 3','Item 4']},
-  yesno:    {name:'Yes / No',      items:['Yes','No']},
-  color:    {name:'Color',         items:Object.keys(COLOR_HEX), colored:true},
-  number:   {name:'Number',        items:Array.from({length:10},(_,i)=>String(i+1))},
-  letter:   {name:'Letter',        items:'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')},
-  emoji:    {name:'Emoji',         items:['😀','😂','😍','😎','🥳','🤔','😴','🤯','👻','🐱','🐶','🍕']},
-  country:  {name:'Country',       items:['Japan','Brazil','Kenya','Norway','Canada','India','Egypt','Italy','Peru','Vietnam','Greece','Morocco','Chile','Iceland','Thailand','Portugal']},
-  city:     {name:'City',          items:['Tokyo','Paris','Nairobi','Lisbon','Toronto','Mumbai','Cairo','Rome','Lima','Hanoi','Athens','Marrakesh','Santiago','Reykjavik','Bangkok','Porto']},
-  animal:   {name:'Animal',        items:['Lion','Otter','Falcon','Panda','Dolphin','Fox','Elephant','Owl','Tiger','Koala','Wolf','Penguin']},
-  moviegenre:{name:'Movie Genre',  items:['Action','Comedy','Sci-Fi','Romance','Horror','Documentary','Musical','Animated','Thriller','Fantasy','Drama','Mystery']},
-  musicgenre:{name:'Music Genre',  items:['Pop','Rock','Hip-Hop','Jazz','Classical','Country','EDM','R&B','Reggae','Blues','Metal','Folk']},
-  food:     {name:'Food',          items:['Pizza','Sushi','Tacos','Burgers','Pasta','Curry','Ramen','Salad','BBQ','Dumplings','Sandwich','Falafel']},
-  truthdate:{name:'Truth or Date', items:['Truth','Truth','Truth','Truth','Date','Date','Date','Date']},
-  headtail: {name:'Heads or Tails',items:['Heads','Tails']},
-};
+      <section>
+        <div id="resultsExportTarget">
+          <div class="team-results" id="teamResults"></div>
+          <div id="extrasBox"></div>
+        </div>
+        <div class="export-row">
+          <button id="exportImgBtn" class="btn ghost small">Export as Image</button>
+          <button id="exportXlsxBtn" class="btn ghost small">Export as Excel</button>
+          <button id="exportPdfBtn" class="btn ghost small">Export as PDF</button>
+        </div>
+      </section>
+    </main>
+  </div>
 
-/* ============================= STATE ============================= */
-let state = {
-  presetKey:'custom',
-  entries: mkEntries(PRESETS.custom.items),
-  weighted:false,
-  repeatMode:'keep',
-  multiStage:false,
-  stages:[{name:'Stage 1', entries:mkEntries(PRESETS.custom.items)}],
-  activeStage:0,
-  history:[],
-  rotation:0,
-  team:{
-    sourceGroups:[{name:'Group A', items:['Alice','Bob','Carla','Dev','Ella','Farid','Gina','Hugo']}],
-    splitMode:'groups', splitValue:2, pickQuantity:'', teamNames:'', rules:{}, lastResult:null
-  }
-};
+  <script>
+    (function () {
+      "use strict";
 
-function mkEntries(list){
-  return list.map((label,i)=>({id:cryptoId(),label,weight:1,color:null}));
-}
-function cryptoId(){return Math.random().toString(36).slice(2,10);}
+      /* ============================= PRESETS ============================= */
+      const PALETTE = ['#c9a24b', '#b23a2e', '#3e7d71', '#7c6fb0', '#4c86a8', '#d98a3d', '#8faf4b', '#b0507c'];
+      const COLOR_HEX = {
+        Red: '#e0483b', Blue: '#2f7fd1', Green: '#4a9d5c', Yellow: '#e0c23c', Purple: '#8b5fbf',
+        Orange: '#e08a3d', Pink: '#e0679c', Teal: '#3e9d92', Brown: '#7a5540', Black: '#222222', White: '#eeeeee', Gray: '#8b8b8b'
+      };
 
-function currentEntries(){
-  return state.multiStage ? state.stages[state.activeStage].entries : state.entries;
-}
-function setCurrentEntries(list){
-  if(state.multiStage) state.stages[state.activeStage].entries = list;
-  else state.entries = list;
-}
+      const PRESETS = {
+        custom: { name: 'Custom', items: ['Item 1', 'Item 2', 'Item 3', 'Item 4'] },
+        yesno: { name: 'Yes / No', items: ['Yes', 'No'] },
+        color: { name: 'Color', items: Object.keys(COLOR_HEX), colored: true },
+        number: { name: 'Number', items: Array.from({ length: 10 }, (_, i) => String(i + 1)) },
+        letter: { name: 'Letter', items: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('') },
+        emoji: { name: 'Emoji', items: ['😀', '😂', '😍', '😎', '🥳', '🤔', '😴', '🤯', '👻', '🐱', '🐶', '🍕'] },
+        country: { name: 'Country', items: ['Japan', 'Brazil', 'Kenya', 'Norway', 'Canada', 'India', 'Egypt', 'Italy', 'Peru', 'Vietnam', 'Greece', 'Morocco', 'Chile', 'Iceland', 'Thailand', 'Portugal'] },
+        city: { name: 'City', items: ['Tokyo', 'Paris', 'Nairobi', 'Lisbon', 'Toronto', 'Mumbai', 'Cairo', 'Rome', 'Lima', 'Hanoi', 'Athens', 'Marrakesh', 'Santiago', 'Reykjavik', 'Bangkok', 'Porto'] },
+        animal: { name: 'Animal', items: ['Lion', 'Otter', 'Falcon', 'Panda', 'Dolphin', 'Fox', 'Elephant', 'Owl', 'Tiger', 'Koala', 'Wolf', 'Penguin'] },
+        moviegenre: { name: 'Movie Genre', items: ['Action', 'Comedy', 'Sci-Fi', 'Romance', 'Horror', 'Documentary', 'Musical', 'Animated', 'Thriller', 'Fantasy', 'Drama', 'Mystery'] },
+        musicgenre: { name: 'Music Genre', items: ['Pop', 'Rock', 'Hip-Hop', 'Jazz', 'Classical', 'Country', 'EDM', 'R&B', 'Reggae', 'Blues', 'Metal', 'Folk'] },
+        food: { name: 'Food', items: ['Pizza', 'Sushi', 'Tacos', 'Burgers', 'Pasta', 'Curry', 'Ramen', 'Salad', 'BBQ', 'Dumplings', 'Sandwich', 'Falafel'] },
+        truthdate: { name: 'Truth or Date', items: ['Truth', 'Truth', 'Truth', 'Truth', 'Date', 'Date', 'Date', 'Date'] },
+        headtail: { name: 'Heads or Tails', items: ['Heads', 'Tails'] },
+      };
 
-/* ============================= PERSISTENCE ============================= */
-let saveTimer=null;
-function scheduleSave(){
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveState, 400);
-}
-async function saveState(){
-  try{ await window.storage.set('wheelhouse:state', JSON.stringify(state)); }catch(e){ console.warn('save failed',e); }
-  if(session.isHost) pushSessionUpdate();
-}
-async function loadState(){
-  try{
-    const r = await window.storage.get('wheelhouse:state');
-    if(r && r.value){
-      const parsed = JSON.parse(r.value);
-      state = Object.assign(state, parsed);
-    }
-  }catch(e){ /* no saved state yet */ }
-}
+      /* ============================= STATE ============================= */
+      let state = {
+        presetKey: 'custom',
+        entries: mkEntries(PRESETS.custom.items),
+        weighted: false,
+        repeatMode: 'keep',
+        multiStage: false,
+        stages: [{ name: 'Stage 1', entries: mkEntries(PRESETS.custom.items) }],
+        activeStage: 0,
+        history: [],
+        rotation: 0,
+        team: {
+          sourceGroups: [{ name: 'Group A', items: ['Alice', 'Bob', 'Carla', 'Dev', 'Ella', 'Farid', 'Gina', 'Hugo'] }],
+          splitMode: 'groups', splitValue: 2, pickQuantity: '', teamNames: '', rules: {}, lastResult: null
+        }
+      };
 
-/* ============================= SESSION / SHARE ============================= */
-const session = {isHost:false, isViewer:false, id:null, expiresAt:0, heartbeatTimer:null, pollTimer:null, countdownTimer:null};
+      function mkEntries(list) {
+        return list.map((label, i) => ({ id: cryptoId(), label, weight: 1, color: null }));
+      }
+      function cryptoId() { return Math.random().toString(36).slice(2, 10); }
 
-function paramSessionId(){
-  const p = new URLSearchParams(location.search);
-  return p.get('session');
-}
-function homeUrl(){
-  return location.origin + location.pathname;
-}
-function shareUrl(id){
-  return homeUrl() + '?session=' + id;
-}
+      function currentEntries() {
+        return state.multiStage ? state.stages[state.activeStage].entries : state.entries;
+      }
+      function setCurrentEntries(list) {
+        if (state.multiStage) state.stages[state.activeStage].entries = list;
+        else state.entries = list;
+      }
 
-async function startHosting(){
-  const id = cryptoId()+cryptoId();
-  const now = Date.now();
-  session.isHost = true; session.id = id; session.expiresAt = now + 120*60*1000;
-  const record = {data: state, createdAt: now, updatedAt: now, expiresAt: session.expiresAt, heartbeat: now, status:'live'};
-  await window.storage.set('session:'+id, JSON.stringify(record), true);
-  renderShareArea();
-  updateLiveBadge();
-  session.heartbeatTimer = setInterval(heartbeat, 5000);
-  session.countdownTimer = setInterval(updateLiveBadge, 1000);
-  window.addEventListener('beforeunload', stopHostingBeacon);
-  window.addEventListener('pagehide', stopHostingBeacon);
-}
+      /* ============================= PERSISTENCE ============================= */
+      let saveTimer = null;
+      function scheduleSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveState, 400);
+      }
+      async function saveState() {
+        try { await window.storage.set('wheelhouse:state', JSON.stringify(state)); } catch (e) { console.warn('save failed', e); }
+        if (session.isHost) pushSessionUpdate();
+      }
+      async function loadState() {
+        try {
+          const r = await window.storage.get('wheelhouse:state');
+          if (r && r.value) {
+            const parsed = JSON.parse(r.value);
+            state = Object.assign(state, parsed);
+          }
+        } catch (e) { /* no saved state yet */ }
+      }
 
-function stopHostingBeacon(){
-  if(!session.isHost) return;
-  try{ window.storage.set('session:'+session.id, JSON.stringify({status:'closed'}), true); }catch(e){}
-}
+      /* ============================= SESSION / SHARE ============================= */
+      const session = { isHost: false, isViewer: false, id: null, expiresAt: 0, heartbeatTimer: null, pollTimer: null, countdownTimer: null };
 
-async function stopHosting(explicit){
-  if(!session.isHost) return;
-  clearInterval(session.heartbeatTimer); clearInterval(session.countdownTimer);
-  if(explicit){
-    try{ await window.storage.set('session:'+session.id, JSON.stringify({status:'closed'}), true); }catch(e){}
-  }
-  session.isHost=false; session.id=null;
-  updateLiveBadge();
-  renderShareArea();
-}
+      function paramSessionId() {
+        const p = new URLSearchParams(location.search);
+        return p.get('session');
+      }
+      function homeUrl() {
+        return location.origin + location.pathname;
+      }
+      function shareUrl(id) {
+        return homeUrl() + '?session=' + id;
+      }
 
-async function heartbeat(){
-  if(!session.isHost) return;
-  if(Date.now() > session.expiresAt){ await stopHosting(true); return; }
-  try{
-    const r = await window.storage.get('session:'+session.id, true);
-    const rec = r ? JSON.parse(r.value) : {};
-    rec.heartbeat = Date.now();
-    rec.data = state; rec.updatedAt = Date.now(); rec.expiresAt = session.expiresAt; rec.status='live';
-    await window.storage.set('session:'+session.id, JSON.stringify(rec), true);
-  }catch(e){ console.warn('heartbeat failed', e); }
-}
+      async function startHosting() {
+        const id = cryptoId() + cryptoId();
+        const now = Date.now();
+        session.isHost = true; session.id = id; session.expiresAt = now + 120 * 60 * 1000;
+        const record = { data: state, createdAt: now, updatedAt: now, expiresAt: session.expiresAt, heartbeat: now, status: 'live' };
+        await window.storage.set('session:' + id, JSON.stringify(record), true);
+        renderShareArea();
+        updateLiveBadge();
+        session.heartbeatTimer = setInterval(heartbeat, 5000);
+        session.countdownTimer = setInterval(updateLiveBadge, 1000);
+        window.addEventListener('beforeunload', stopHostingBeacon);
+        window.addEventListener('pagehide', stopHostingBeacon);
+      }
 
-async function pushSessionUpdate(){
-  if(!session.isHost) return;
-  try{
-    const r = await window.storage.get('session:'+session.id, true);
-    const rec = r ? JSON.parse(r.value) : {status:'live',expiresAt:session.expiresAt};
-    rec.data = state; rec.updatedAt = Date.now();
-    await window.storage.set('session:'+session.id, JSON.stringify(rec), true);
-  }catch(e){}
-}
+      function stopHostingBeacon() {
+        if (!session.isHost) return;
+        try { window.storage.set('session:' + session.id, JSON.stringify({ status: 'closed' }), true); } catch (e) { }
+      }
 
-async function enterViewerMode(id){
-  session.isViewer = true; session.id = id;
-  const holder = document.getElementById('viewerBannerHolder');
-  holder.innerHTML = '<div class="viewer-banner">🔗 You are viewing a shared live wheel. It stays in sync while the host keeps it open.</div>';
-  document.getElementById('shareBtn').classList.add('hidden');
-  const ok = await pollViewer(true);
-  if(ok){
-    session.pollTimer = setInterval(()=>pollViewer(false), 3000);
-    session.countdownTimer = setInterval(updateLiveBadge, 1000);
-  }
-}
+      async function stopHosting(explicit) {
+        if (!session.isHost) return;
+        clearInterval(session.heartbeatTimer); clearInterval(session.countdownTimer);
+        if (explicit) {
+          try { await window.storage.set('session:' + session.id, JSON.stringify({ status: 'closed' }), true); } catch (e) { }
+        }
+        session.isHost = false; session.id = null;
+        updateLiveBadge();
+        renderShareArea();
+      }
 
-async function pollViewer(isFirst){
-  try{
-    const r = await window.storage.get('session:'+session.id, true);
-    if(!r || !r.value) return redirectHome();
-    const rec = JSON.parse(r.value);
-    if(rec.status === 'closed') return redirectHome();
-    if(!rec.expiresAt || Date.now() > rec.expiresAt) return redirectHome();
-    if(rec.heartbeat && (Date.now() - rec.heartbeat) > 20000) return redirectHome();
-    session.expiresAt = rec.expiresAt;
-    if(rec.data && (isFirst || rec.updatedAt !== session._lastUpdatedAt)){
-      session._lastUpdatedAt = rec.updatedAt;
-      state = Object.assign(state, rec.data);
-      renderAll();
-    }
-    updateLiveBadge();
-    return true;
-  }catch(e){
-    console.warn('viewer poll failed', e);
-    return true; // don't kill session on a transient error
-  }
-}
+      async function heartbeat() {
+        if (!session.isHost) return;
+        if (Date.now() > session.expiresAt) { await stopHosting(true); return; }
+        try {
+          const r = await window.storage.get('session:' + session.id, true);
+          const rec = r ? JSON.parse(r.value) : {};
+          rec.heartbeat = Date.now();
+          rec.data = state; rec.updatedAt = Date.now(); rec.expiresAt = session.expiresAt; rec.status = 'live';
+          await window.storage.set('session:' + session.id, JSON.stringify(rec), true);
+        } catch (e) { console.warn('heartbeat failed', e); }
+      }
 
-function redirectHome(){
-  clearInterval(session.pollTimer); clearInterval(session.countdownTimer);
-  location.replace(homeUrl());
-}
+      async function pushSessionUpdate() {
+        if (!session.isHost) return;
+        try {
+          const r = await window.storage.get('session:' + session.id, true);
+          const rec = r ? JSON.parse(r.value) : { status: 'live', expiresAt: session.expiresAt };
+          rec.data = state; rec.updatedAt = Date.now();
+          await window.storage.set('session:' + session.id, JSON.stringify(rec), true);
+        } catch (e) { }
+      }
 
-function updateLiveBadge(){
-  const badge = document.getElementById('liveBadge');
-  const text = document.getElementById('liveBadgeText');
-  if(session.isHost || session.isViewer){
-    badge.classList.remove('hidden');
-    const remain = Math.max(0, session.expiresAt - Date.now());
-    const m = Math.floor(remain/60000), s = Math.floor((remain%60000)/1000);
-    text.textContent = (session.isHost?'HOSTING ':'LIVE ') + String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-    if(remain<=0){ session.isHost? stopHosting(true) : redirectHome(); }
-  } else {
-    badge.classList.add('hidden');
-  }
-  renderShareArea();
-}
+      async function enterViewerMode(id) {
+        session.isViewer = true; session.id = id;
+        const holder = document.getElementById('viewerBannerHolder');
+        holder.innerHTML = '<div class="viewer-banner">🔗 You are viewing a shared live wheel. It stays in sync while the host keeps it open.</div>';
+        document.getElementById('shareBtn').classList.add('hidden');
+        const ok = await pollViewer(true);
+        if (ok) {
+          session.pollTimer = setInterval(() => pollViewer(false), 3000);
+          session.countdownTimer = setInterval(updateLiveBadge, 1000);
+        }
+      }
 
-function renderShareArea(){
-  const el = document.getElementById('shareArea');
-  if(!el) return;
-  if(session.isViewer){
-    el.innerHTML = '<p class="muted small">This device is viewing someone else\u2019s shared session.</p>';
-    return;
-  }
-  if(!session.isHost){
-    el.innerHTML = '<p class="muted small">No live session yet. Click "Share Live" to generate a link.</p>';
-    return;
-  }
-  const remain = Math.max(0, session.expiresAt - Date.now());
-  const m = Math.floor(remain/60000), s = Math.floor((remain%60000)/1000);
-  el.innerHTML = `
-    <div class="countdown mono">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>
+      async function pollViewer(isFirst) {
+        try {
+          const r = await window.storage.get('session:' + session.id, true);
+          if (!r || !r.value) return redirectHome();
+          const rec = JSON.parse(r.value);
+          if (rec.status === 'closed') return redirectHome();
+          if (!rec.expiresAt || Date.now() > rec.expiresAt) return redirectHome();
+          if (rec.heartbeat && (Date.now() - rec.heartbeat) > 20000) return redirectHome();
+          session.expiresAt = rec.expiresAt;
+          if (rec.data && (isFirst || rec.updatedAt !== session._lastUpdatedAt)) {
+            session._lastUpdatedAt = rec.updatedAt;
+            state = Object.assign(state, rec.data);
+            renderAll();
+          }
+          updateLiveBadge();
+          return true;
+        } catch (e) {
+          console.warn('viewer poll failed', e);
+          return true; // don't kill session on a transient error
+        }
+      }
+
+      function redirectHome() {
+        clearInterval(session.pollTimer); clearInterval(session.countdownTimer);
+        location.replace(homeUrl());
+      }
+
+      function updateLiveBadge() {
+        const badge = document.getElementById('liveBadge');
+        const text = document.getElementById('liveBadgeText');
+        if (session.isHost || session.isViewer) {
+          badge.classList.remove('hidden');
+          const remain = Math.max(0, session.expiresAt - Date.now());
+          const m = Math.floor(remain / 60000), s = Math.floor((remain % 60000) / 1000);
+          text.textContent = (session.isHost ? 'HOSTING ' : 'LIVE ') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+          if (remain <= 0) { session.isHost ? stopHosting(true) : redirectHome(); }
+        } else {
+          badge.classList.add('hidden');
+        }
+        renderShareArea();
+      }
+
+      function renderShareArea() {
+        const el = document.getElementById('shareArea');
+        if (!el) return;
+        if (session.isViewer) {
+          el.innerHTML = '<p class="muted small">This device is viewing someone else\u2019s shared session.</p>';
+          return;
+        }
+        if (!session.isHost) {
+          el.innerHTML = '<p class="muted small">No live session yet. Click "Share Live" to generate a link.</p>';
+          return;
+        }
+        const remain = Math.max(0, session.expiresAt - Date.now());
+        const m = Math.floor(remain / 60000), s = Math.floor((remain % 60000) / 1000);
+        el.innerHTML = `
+    <div class="countdown mono">${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}</div>
     <div class="share-link-box">
       <input type="text" readonly id="shareLinkInput" value="${shareUrl(session.id)}">
       <button class="btn ghost small" id="copyLinkBtn">Copy</button>
     </div>
     <button class="btn red small" id="stopShareBtn" style="width:100%;">Stop Sharing</button>
   `;
-  document.getElementById('copyLinkBtn').onclick = ()=>{
-    navigator.clipboard.writeText(shareUrl(session.id));
-  };
-  document.getElementById('stopShareBtn').onclick = ()=> stopHosting(true);
-}
+        document.getElementById('copyLinkBtn').onclick = () => {
+          navigator.clipboard.writeText(shareUrl(session.id));
+        };
+        document.getElementById('stopShareBtn').onclick = () => stopHosting(true);
+      }
 
-document.getElementById('shareBtn').addEventListener('click', ()=>{
-  if(session.isHost){ document.getElementById('sharePanel').scrollIntoView({behavior:'smooth'}); return; }
-  startHosting();
-});
+      document.getElementById('shareBtn').addEventListener('click', () => {
+        if (session.isHost) { document.getElementById('sharePanel').scrollIntoView({ behavior: 'smooth' }); return; }
+        startHosting();
+      });
 
-/* ============================= TABS ============================= */
-document.querySelectorAll('.tab').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    const t = btn.dataset.tab;
-    document.getElementById('wheelTab').classList.toggle('hidden', t!=='wheel');
-    document.getElementById('teamTab').classList.toggle('hidden', t!=='team');
-  });
-});
+      /* ============================= TABS ============================= */
+      document.querySelectorAll('.tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const t = btn.dataset.tab;
+          document.getElementById('wheelTab').classList.toggle('hidden', t !== 'wheel');
+          document.getElementById('teamTab').classList.toggle('hidden', t !== 'team');
+        });
+      });
 
-/* ============================= PRESET CHIPS ============================= */
-function renderPresetChips(){
-  const row = document.getElementById('presetChips');
-  row.innerHTML = '';
-  Object.entries(PRESETS).forEach(([key,p])=>{
-    const chip = document.createElement('button');
-    chip.className = 'chip'+(state.presetKey===key?' active':'');
-    chip.textContent = p.name;
-    chip.onclick = ()=>{
-      state.presetKey = key;
-      const entries = mkEntries(p.items);
-      if(p.colored) entries.forEach(e=> e.color = COLOR_HEX[e.label]);
-      setCurrentEntries(entries);
-      renderAll(); scheduleSave();
-    };
-    row.appendChild(chip);
-  });
-}
+      /* ============================= PRESET CHIPS ============================= */
+      function renderPresetChips() {
+        const row = document.getElementById('presetChips');
+        row.innerHTML = '';
+        Object.entries(PRESETS).forEach(([key, p]) => {
+          const chip = document.createElement('button');
+          chip.className = 'chip' + (state.presetKey === key ? ' active' : '');
+          chip.textContent = p.name;
+          chip.onclick = () => {
+            state.presetKey = key;
+            const entries = mkEntries(p.items);
+            if (p.colored) entries.forEach(e => e.color = COLOR_HEX[e.label]);
+            setCurrentEntries(entries);
+            renderAll(); scheduleSave();
+          };
+          row.appendChild(chip);
+        });
+      }
 
-/* ============================= ENTRY LIST ============================= */
-function renderEntryList(){
-  const list = document.getElementById('entryList');
-  list.innerHTML = '';
-  currentEntries().forEach((e,idx)=>{
-    const row = document.createElement('div');
-    row.className = 'entry-row';
-    row.innerHTML = `
-      <span class="swatch" style="background:${e.color || PALETTE[idx%PALETTE.length]}"></span>
+      /* ============================= ENTRY LIST ============================= */
+      function renderEntryList() {
+        const list = document.getElementById('entryList');
+        list.innerHTML = '';
+        currentEntries().forEach((e, idx) => {
+          const row = document.createElement('div');
+          row.className = 'entry-row';
+          row.innerHTML = `
+      <span class="swatch" style="background:${e.color || PALETTE[idx % PALETTE.length]}"></span>
       <input type="text" value="${escapeAttr(e.label)}" data-idx="${idx}" class="entryLabel">
       ${state.weighted ? `<input type="number" min="0.1" step="0.1" value="${e.weight}" class="entryWeight" data-idx="${idx}" title="weight">` : ''}
       <button class="icon-btn removeBtn" data-idx="${idx}" title="remove">✕</button>
     `;
-    list.appendChild(row);
-  });
-  list.querySelectorAll('.entryLabel').forEach(inp=>{
-    inp.addEventListener('input', ()=>{
-      const arr = currentEntries();
-      arr[+inp.dataset.idx].label = inp.value;
-      setCurrentEntries(arr);
-      drawWheel(); scheduleSave();
-    });
-  });
-  list.querySelectorAll('.entryWeight').forEach(inp=>{
-    inp.addEventListener('input', ()=>{
-      const arr = currentEntries();
-      arr[+inp.dataset.idx].weight = parseFloat(inp.value)||1;
-      setCurrentEntries(arr);
-      drawWheel(); scheduleSave();
-    });
-  });
-  list.querySelectorAll('.removeBtn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const arr = currentEntries();
-      arr.splice(+btn.dataset.idx,1);
-      setCurrentEntries(arr);
-      renderAll(); scheduleSave();
-    });
-  });
-}
-function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
-
-document.getElementById('addEntryBtn').addEventListener('click', ()=>{
-  const arr = currentEntries();
-  arr.push({id:cryptoId(),label:'New item',weight:1,color:null});
-  setCurrentEntries(arr);
-  renderAll(); scheduleSave();
-});
-document.getElementById('bulkAddBtn').addEventListener('click', ()=>{
-  const ta = document.getElementById('bulkPaste');
-  const lines = ta.value.split('\\n').map(s=>s.trim()).filter(Boolean);
-  if(!lines.length) return;
-  const arr = currentEntries().concat(mkEntries(lines));
-  setCurrentEntries(arr);
-  ta.value='';
-  renderAll(); scheduleSave();
-});
-
-document.getElementById('optWeighted').addEventListener('change', (e)=>{
-  state.weighted = e.target.checked;
-  renderEntryList(); drawWheel(); scheduleSave();
-});
-document.getElementById('repeatMode').addEventListener('change', (e)=>{
-  state.repeatMode = e.target.value; scheduleSave();
-});
-document.getElementById('optMultiStage').addEventListener('change', (e)=>{
-  state.multiStage = e.target.checked;
-  document.getElementById('stageManager').classList.toggle('hidden', !state.multiStage);
-  renderStageManager(); renderAll(); scheduleSave();
-});
-
-function renderStageManager(){
-  const box = document.getElementById('stageManager');
-  if(!state.multiStage){ box.innerHTML=''; return; }
-  box.innerHTML = `<div class="stage-tabs" id="stageTabs"></div><button class="btn ghost small" id="addStageBtn">+ Add stage</button>`;
-  const tabs = document.getElementById('stageTabs');
-  state.stages.forEach((s,i)=>{
-    const b = document.createElement('button');
-    b.className='chip'+(state.activeStage===i?' active':'');
-    b.textContent = s.name;
-    b.onclick = ()=>{ state.activeStage=i; renderAll(); };
-    tabs.appendChild(b);
-  });
-  document.getElementById('addStageBtn').onclick = ()=>{
-    state.stages.push({name:'Stage '+(state.stages.length+1), entries:mkEntries(['Item 1','Item 2'])});
-    state.activeStage = state.stages.length-1;
-    renderStageManager(); renderAll(); scheduleSave();
-  };
-}
-
-/* ============================= IMPORTS ============================= */
-function addImportedItems(items){
-  items = items.map(s=>String(s).trim()).filter(Boolean);
-  if(!items.length) return;
-  const arr = currentEntries().concat(mkEntries(items));
-  setCurrentEntries(arr);
-  renderAll(); scheduleSave();
-}
-document.getElementById('importCSV').addEventListener('change', (e)=>{
-  const file = e.target.files[0]; if(!file) return;
-  Papa.parse(file, {complete:(res)=>{
-    const items = res.data.map(row=>row[0]).filter(x=>x!==undefined);
-    addImportedItems(items);
-  }});
-  e.target.value='';
-});
-document.getElementById('importXLSX').addEventListener('change', (e)=>{
-  const file = e.target.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev)=>{
-    const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
-    const sheet = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, {header:1});
-    addImportedItems(rows.map(r=>r[0]));
-  };
-  reader.readAsArrayBuffer(file);
-  e.target.value='';
-});
-document.getElementById('importDOCX').addEventListener('change', (e)=>{
-  const file = e.target.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev)=>{
-    mammoth.extractRawText({arrayBuffer:ev.target.result}).then(res=>{
-      addImportedItems(res.value.split('\\n'));
-    });
-  };
-  reader.readAsArrayBuffer(file);
-  e.target.value='';
-});
-document.getElementById('importPDF').addEventListener('change', (e)=>{
-  const file = e.target.files[0]; if(!file) return;
-  if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
-  const reader = new FileReader();
-  reader.onload = async (ev)=>{
-    try{
-      const pdf = await pdfjsLib.getDocument({data: ev.target.result}).promise;
-      let lines = [];
-      for(let p=1;p<=pdf.numPages;p++){
-        const page = await pdf.getPage(p);
-        const content = await page.getTextContent();
-        const text = content.items.map(it=>it.str).join(' ');
-        lines = lines.concat(text.split(/\\r?\\n|(?<=[.!?])\\s{2,}/));
+          list.appendChild(row);
+        });
+        list.querySelectorAll('.entryLabel').forEach(inp => {
+          inp.addEventListener('input', () => {
+            const arr = currentEntries();
+            arr[+inp.dataset.idx].label = inp.value;
+            setCurrentEntries(arr);
+            drawWheel(); scheduleSave();
+          });
+        });
+        list.querySelectorAll('.entryWeight').forEach(inp => {
+          inp.addEventListener('input', () => {
+            const arr = currentEntries();
+            arr[+inp.dataset.idx].weight = parseFloat(inp.value) || 1;
+            setCurrentEntries(arr);
+            drawWheel(); scheduleSave();
+          });
+        });
+        list.querySelectorAll('.removeBtn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const arr = currentEntries();
+            arr.splice(+btn.dataset.idx, 1);
+            setCurrentEntries(arr);
+            renderAll(); scheduleSave();
+          });
+        });
       }
-      addImportedItems(lines);
-    }catch(err){ alert('Could not read that PDF.'); }
-  };
-  reader.readAsArrayBuffer(file);
-  e.target.value='';
-});
+      function escapeAttr(s) { return String(s).replace(/"/g, '&quot;'); }
 
-/* ============================= WHEEL DRAWING ============================= */
-const canvas = document.getElementById('wheelCanvas');
-const ctx = canvas.getContext('2d');
-let bulbChase = 0, spinning = false;
+      document.getElementById('addEntryBtn').addEventListener('click', () => {
+        const arr = currentEntries();
+        arr.push({ id: cryptoId(), label: 'New item', weight: 1, color: null });
+        setCurrentEntries(arr);
+        renderAll(); scheduleSave();
+      });
+      document.getElementById('bulkAddBtn').addEventListener('click', () => {
+        const ta = document.getElementById('bulkPaste');
+        const lines = ta.value.split('\\n').map(s => s.trim()).filter(Boolean);
+        if (!lines.length) return;
+        const arr = currentEntries().concat(mkEntries(lines));
+        setCurrentEntries(arr);
+        ta.value = '';
+        renderAll(); scheduleSave();
+      });
 
-function drawWheel(){
-  const entries = currentEntries();
-  const W = canvas.width, H = canvas.height, cx=W/2, cy=H/2, R = W/2 - 18;
-  ctx.clearRect(0,0,W,H);
+      document.getElementById('optWeighted').addEventListener('change', (e) => {
+        state.weighted = e.target.checked;
+        renderEntryList(); drawWheel(); scheduleSave();
+      });
+      document.getElementById('repeatMode').addEventListener('change', (e) => {
+        state.repeatMode = e.target.value; scheduleSave();
+      });
+      document.getElementById('optMultiStage').addEventListener('change', (e) => {
+        state.multiStage = e.target.checked;
+        document.getElementById('stageManager').classList.toggle('hidden', !state.multiStage);
+        renderStageManager(); renderAll(); scheduleSave();
+      });
 
-  // outer rim with bulbs
-  const bulbCount = 28;
-  for(let i=0;i<bulbCount;i++){
-    const a = (i/bulbCount)*Math.PI*2;
-    const bx = cx + Math.cos(a)*(R+11), by = cy + Math.sin(a)*(R+11);
-    const lit = spinning ? (i % 4 === Math.floor(bulbChase)%4) : true;
-    ctx.beginPath();
-    ctx.arc(bx,by,4,0,Math.PI*2);
-    ctx.fillStyle = lit ? '#f4d98a' : '#5c4c28';
-    ctx.shadowColor = lit ? '#f4d98a' : 'transparent';
-    ctx.shadowBlur = lit ? 8 : 0;
-    ctx.fill();
-  }
-  ctx.shadowBlur = 0;
+      function renderStageManager() {
+        const box = document.getElementById('stageManager');
+        if (!state.multiStage) { box.innerHTML = ''; return; }
+        box.innerHTML = `<div class="stage-tabs" id="stageTabs"></div><button class="btn ghost small" id="addStageBtn">+ Add stage</button>`;
+        const tabs = document.getElementById('stageTabs');
+        state.stages.forEach((s, i) => {
+          const b = document.createElement('button');
+          b.className = 'chip' + (state.activeStage === i ? ' active' : '');
+          b.textContent = s.name;
+          b.onclick = () => { state.activeStage = i; renderAll(); };
+          tabs.appendChild(b);
+        });
+        document.getElementById('addStageBtn').onclick = () => {
+          state.stages.push({ name: 'Stage ' + (state.stages.length + 1), entries: mkEntries(['Item 1', 'Item 2']) });
+          state.activeStage = state.stages.length - 1;
+          renderStageManager(); renderAll(); scheduleSave();
+        };
+      }
 
-  ctx.save();
-  ctx.translate(cx,cy);
-  ctx.rotate(state.rotation);
+      /* ============================= IMPORTS ============================= */
+      function addImportedItems(items) {
+        items = items.map(s => String(s).trim()).filter(Boolean);
+        if (!items.length) return;
+        const arr = currentEntries().concat(mkEntries(items));
+        setCurrentEntries(arr);
+        renderAll(); scheduleSave();
+      }
+      document.getElementById('importCSV').addEventListener('change', (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        Papa.parse(file, {
+          complete: (res) => {
+            const items = res.data.map(row => row[0]).filter(x => x !== undefined);
+            addImportedItems(items);
+          }
+        });
+        e.target.value = '';
+      });
+      document.getElementById('importXLSX').addEventListener('change', (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          addImportedItems(rows.map(r => r[0]));
+        };
+        reader.readAsArrayBuffer(file);
+        e.target.value = '';
+      });
+      document.getElementById('importDOCX').addEventListener('change', (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          mammoth.extractRawText({ arrayBuffer: ev.target.result }).then(res => {
+            addImportedItems(res.value.split('\\n'));
+          });
+        };
+        reader.readAsArrayBuffer(file);
+        e.target.value = '';
+      });
+      document.getElementById('importPDF').addEventListener('change', (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          try {
+            const pdf = await pdfjsLib.getDocument({ data: ev.target.result }).promise;
+            let lines = [];
+            for (let p = 1; p <= pdf.numPages; p++) {
+              const page = await pdf.getPage(p);
+              const content = await page.getTextContent();
+              const text = content.items.map(it => it.str).join(' ');
+              lines = lines.concat(text.split(/\\r?\\n|(?<=[.!?])\\s{2,}/));
+            }
+            addImportedItems(lines);
+          } catch (err) { alert('Could not read that PDF.'); }
+        };
+        reader.readAsArrayBuffer(file);
+        e.target.value = '';
+      });
 
-  if(entries.length===0){
-    ctx.beginPath(); ctx.arc(0,0,R,0,Math.PI*2); ctx.fillStyle='#2a231c'; ctx.fill();
-  } else {
-    const totalWeight = entries.reduce((s,e)=> s + (state.weighted?Math.max(0.05,+e.weight||1):1), 0);
-    let start = 0;
-    entries.forEach((e,i)=>{
-      const w = state.weighted?Math.max(0.05,+e.weight||1):1;
-      const slice = (w/totalWeight)*Math.PI*2;
-      ctx.beginPath();
-      ctx.moveTo(0,0);
-      ctx.arc(0,0,R,start,start+slice);
-      ctx.closePath();
-      ctx.fillStyle = e.color || PALETTE[i%PALETTE.length];
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth=2; ctx.stroke();
+      /* ============================= WHEEL DRAWING ============================= */
+      const canvas = document.getElementById('wheelCanvas');
+      const ctx = canvas.getContext('2d');
+      let bulbChase = 0, spinning = false;
 
-      ctx.save();
-      ctx.rotate(start+slice/2);
-      ctx.textAlign='right';
-      ctx.fillStyle = isLight(e.color||PALETTE[i%PALETTE.length]) ? '#171310' : '#f3ead8';
-      ctx.font = '600 16px "Space Grotesk", sans-serif';
-      const label = e.label.length>16 ? e.label.slice(0,15)+'…' : e.label;
-      ctx.fillText(label, R-14, 5);
-      ctx.restore();
+      function drawWheel() {
+        const entries = currentEntries();
+        const W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2, R = W / 2 - 18;
+        ctx.clearRect(0, 0, W, H);
 
-      start += slice;
-    });
-  }
-  ctx.restore();
+        // outer rim with bulbs
+        const bulbCount = 28;
+        for (let i = 0; i < bulbCount; i++) {
+          const a = (i / bulbCount) * Math.PI * 2;
+          const bx = cx + Math.cos(a) * (R + 11), by = cy + Math.sin(a) * (R + 11);
+          const lit = spinning ? (i % 4 === Math.floor(bulbChase) % 4) : true;
+          ctx.beginPath();
+          ctx.arc(bx, by, 4, 0, Math.PI * 2);
+          ctx.fillStyle = lit ? '#f4d98a' : '#5c4c28';
+          ctx.shadowColor = lit ? '#f4d98a' : 'transparent';
+          ctx.shadowBlur = lit ? 8 : 0;
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
 
-  // hub
-  ctx.beginPath(); ctx.arc(cx,cy,26,0,Math.PI*2);
-  ctx.fillStyle='#c9a24b'; ctx.fill();
-  ctx.lineWidth=3; ctx.strokeStyle='#171310'; ctx.stroke();
-}
-function isLight(hex){
-  if(!hex) return false;
-  const c = hex.replace('#','');
-  if(c.length<6) return false;
-  const r=parseInt(c.slice(0,2),16), g=parseInt(c.slice(2,4),16), b=parseInt(c.slice(4,6),16);
-  return (0.299*r+0.587*g+0.114*b) > 180;
-}
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(state.rotation);
 
-/* ============================= SPIN LOGIC ============================= */
-function pickWeightedIndex(entries){
-  const weights = entries.map(e=> state.weighted?Math.max(0.05,+e.weight||1):1);
-  const total = weights.reduce((a,b)=>a+b,0);
-  let r = Math.random()*total;
-  for(let i=0;i<weights.length;i++){ r-=weights[i]; if(r<=0) return i; }
-  return entries.length-1;
-}
+        if (entries.length === 0) {
+          ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fillStyle = '#2a231c'; ctx.fill();
+        } else {
+          const totalWeight = entries.reduce((s, e) => s + (state.weighted ? Math.max(0.05, +e.weight || 1) : 1), 0);
+          let start = 0;
+          entries.forEach((e, i) => {
+            const w = state.weighted ? Math.max(0.05, +e.weight || 1) : 1;
+            const slice = (w / totalWeight) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, R, start, start + slice);
+            ctx.closePath();
+            ctx.fillStyle = e.color || PALETTE[i % PALETTE.length];
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 2; ctx.stroke();
 
-function spin(){
-  const entries = currentEntries();
-  if(spinning || entries.length<2) return;
-  spinning = true;
-  document.getElementById('spinBtn').disabled = true;
-  document.getElementById('resultBanner').classList.add('hidden');
+            ctx.save();
+            ctx.rotate(start + slice / 2);
+            ctx.textAlign = 'right';
+            ctx.fillStyle = isLight(e.color || PALETTE[i % PALETTE.length]) ? '#171310' : '#f3ead8';
+            ctx.font = '600 16px "Space Grotesk", sans-serif';
+            const label = e.label.length > 16 ? e.label.slice(0, 15) + '…' : e.label;
+            ctx.fillText(label, R - 14, 5);
+            ctx.restore();
 
-  const totalWeight = entries.reduce((s,e)=> s + (state.weighted?Math.max(0.05,+e.weight||1):1), 0);
-  const winnerIdx = pickWeightedIndex(entries);
-  let acc = 0, midDeg = 0;
-  for(let i=0;i<entries.length;i++){
-    const w = state.weighted?Math.max(0.05,+entries[i].weight||1):1;
-    const sliceDeg = (w/totalWeight)*360;
-    if(i===winnerIdx){ midDeg = acc + sliceDeg/2; }
-    acc += sliceDeg;
-  }
-  const pointerDeg = 270;
-  const norm = d => ((d%360)+360)%360;
-  const curDeg = norm(state.rotation*180/Math.PI);
-  const offset = norm(pointerDeg - midDeg - curDeg);
-  const extraSpins = 6 + Math.floor(Math.random()*3);
-  const targetRotationDeg = (state.rotation*180/Math.PI) + extraSpins*360 + offset;
-  const startRotation = state.rotation;
-  const endRotation = targetRotationDeg*Math.PI/180;
-  const duration = 4200;
-  const startTime = performance.now();
-  const bulbInterval = setInterval(()=>{ bulbChase++; drawWheel(); }, 80);
+            start += slice;
+          });
+        }
+        ctx.restore();
 
-  function frame(now){
-    const t = Math.min(1, (now-startTime)/duration);
-    const eased = 1 - Math.pow(1-t, 3);
-    state.rotation = startRotation + (endRotation-startRotation)*eased;
-    drawWheel();
-    if(t<1){ requestAnimationFrame(frame); }
-    else{
-      clearInterval(bulbInterval);
-      spinning = false;
-      document.getElementById('spinBtn').disabled = false;
-      onSpinComplete(winnerIdx);
-    }
-  }
-  requestAnimationFrame(frame);
-}
+        // hub
+        ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+        ctx.fillStyle = '#c9a24b'; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#171310'; ctx.stroke();
+      }
+      function isLight(hex) {
+        if (!hex) return false;
+        const c = hex.replace('#', '');
+        if (c.length < 6) return false;
+        const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+        return (0.299 * r + 0.587 * g + 0.114 * b) > 180;
+      }
 
-function onSpinComplete(winnerIdx){
-  const entries = currentEntries();
-  const winner = entries[winnerIdx];
-  const banner = document.getElementById('resultBanner');
+      /* ============================= SPIN LOGIC ============================= */
+      function pickWeightedIndex(entries) {
+        const weights = entries.map(e => state.weighted ? Math.max(0.05, +e.weight || 1) : 1);
+        const total = weights.reduce((a, b) => a + b, 0);
+        let r = Math.random() * total;
+        for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) return i; }
+        return entries.length - 1;
+      }
 
-  if(state.repeatMode === 'elimination'){
-    entries.splice(winnerIdx,1);
-    setCurrentEntries(entries);
-    if(entries.length===1){
-      banner.textContent = '🏆 Champion: ' + entries[0].label;
-      addHistory('🏆 Champion', entries[0].label);
-    } else {
-      banner.textContent = '❌ Eliminated: ' + winner.label;
-      addHistory('Eliminated', winner.label);
-    }
-  } else if(state.repeatMode === 'norepeat'){
-    entries.splice(winnerIdx,1);
-    setCurrentEntries(entries);
-    banner.textContent = '🎯 ' + winner.label;
-    addHistory('Picked', winner.label);
-  } else {
-    banner.textContent = '🎯 ' + winner.label;
-    addHistory('Result', winner.label);
-  }
-  banner.classList.remove('hidden');
-  renderEntryList();
-  scheduleSave();
+      function spin() {
+        const entries = currentEntries();
+        if (spinning || entries.length < 2) return;
+        spinning = true;
+        document.getElementById('spinBtn').disabled = true;
+        document.getElementById('resultBanner').classList.add('hidden');
 
-  if(state.multiStage && state.activeStage < state.stages.length-1){
-    const nextBtn = document.createElement('button');
-    nextBtn.className='btn teal small';
-    nextBtn.style.marginTop='10px';
-    nextBtn.textContent='Advance to '+state.stages[state.activeStage+1].name+' →';
-    nextBtn.onclick = ()=>{ state.activeStage++; renderAll(); };
-    banner.appendChild(document.createElement('br'));
-    banner.appendChild(nextBtn);
-  }
-}
+        const totalWeight = entries.reduce((s, e) => s + (state.weighted ? Math.max(0.05, +e.weight || 1) : 1), 0);
+        const winnerIdx = pickWeightedIndex(entries);
+        let acc = 0, midDeg = 0;
+        for (let i = 0; i < entries.length; i++) {
+          const w = state.weighted ? Math.max(0.05, +entries[i].weight || 1) : 1;
+          const sliceDeg = (w / totalWeight) * 360;
+          if (i === winnerIdx) { midDeg = acc + sliceDeg / 2; }
+          acc += sliceDeg;
+        }
+        const pointerDeg = 270;
+        const norm = d => ((d % 360) + 360) % 360;
+        const curDeg = norm(state.rotation * 180 / Math.PI);
+        const offset = norm(pointerDeg - midDeg - curDeg);
+        const extraSpins = 6 + Math.floor(Math.random() * 3);
+        const targetRotationDeg = (state.rotation * 180 / Math.PI) + extraSpins * 360 + offset;
+        const startRotation = state.rotation;
+        const endRotation = targetRotationDeg * Math.PI / 180;
+        const duration = 4200;
+        const startTime = performance.now();
+        const bulbInterval = setInterval(() => { bulbChase++; drawWheel(); }, 80);
 
-function addHistory(label, value){
-  state.history.unshift({label,value,time:new Date().toLocaleTimeString()});
-  state.history = state.history.slice(0,30);
-  renderHistory();
-}
-function renderHistory(){
-  const list = document.getElementById('historyList');
-  list.innerHTML = state.history.map(h=>`<div class="history-item"><span>${h.label}: <strong>${h.value}</strong></span><span class="muted mono">${h.time}</span></div>`).join('');
-}
+        function frame(now) {
+          const t = Math.min(1, (now - startTime) / duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          state.rotation = startRotation + (endRotation - startRotation) * eased;
+          drawWheel();
+          if (t < 1) { requestAnimationFrame(frame); }
+          else {
+            clearInterval(bulbInterval);
+            spinning = false;
+            document.getElementById('spinBtn').disabled = false;
+            onSpinComplete(winnerIdx);
+          }
+        }
+        requestAnimationFrame(frame);
+      }
 
-document.getElementById('spinBtn').addEventListener('click', spin);
+      function onSpinComplete(winnerIdx) {
+        const entries = currentEntries();
+        const winner = entries[winnerIdx];
+        const banner = document.getElementById('resultBanner');
 
-/* ============================= TEAM PICKER ============================= */
-function renderSrcGroups(){
-  const box = document.getElementById('srcGroupList');
-  box.innerHTML = '';
-  state.team.sourceGroups.forEach((g,gi)=>{
-    const div = document.createElement('div');
-    div.className='src-group';
-    div.innerHTML = `
+        if (state.repeatMode === 'elimination') {
+          entries.splice(winnerIdx, 1);
+          setCurrentEntries(entries);
+          if (entries.length === 1) {
+            banner.textContent = '🏆 Champion: ' + entries[0].label;
+            addHistory('🏆 Champion', entries[0].label);
+          } else {
+            banner.textContent = '❌ Eliminated: ' + winner.label;
+            addHistory('Eliminated', winner.label);
+          }
+        } else if (state.repeatMode === 'norepeat') {
+          entries.splice(winnerIdx, 1);
+          setCurrentEntries(entries);
+          banner.textContent = '🎯 ' + winner.label;
+          addHistory('Picked', winner.label);
+        } else {
+          banner.textContent = '🎯 ' + winner.label;
+          addHistory('Result', winner.label);
+        }
+        banner.classList.remove('hidden');
+        renderEntryList();
+        scheduleSave();
+
+        if (state.multiStage && state.activeStage < state.stages.length - 1) {
+          const nextBtn = document.createElement('button');
+          nextBtn.className = 'btn teal small';
+          nextBtn.style.marginTop = '10px';
+          nextBtn.textContent = 'Advance to ' + state.stages[state.activeStage + 1].name + ' →';
+          nextBtn.onclick = () => { state.activeStage++; renderAll(); };
+          banner.appendChild(document.createElement('br'));
+          banner.appendChild(nextBtn);
+        }
+      }
+
+      function addHistory(label, value) {
+        state.history.unshift({ label, value, time: new Date().toLocaleTimeString() });
+        state.history = state.history.slice(0, 30);
+        renderHistory();
+      }
+      function renderHistory() {
+        const list = document.getElementById('historyList');
+        list.innerHTML = state.history.map(h => `<div class="history-item"><span>${h.label}: <strong>${h.value}</strong></span><span class="muted mono">${h.time}</span></div>`).join('');
+      }
+
+      document.getElementById('spinBtn').addEventListener('click', spin);
+
+      /* ============================= TEAM PICKER ============================= */
+      function renderSrcGroups() {
+        const box = document.getElementById('srcGroupList');
+        box.innerHTML = '';
+        state.team.sourceGroups.forEach((g, gi) => {
+          const div = document.createElement('div');
+          div.className = 'src-group';
+          div.innerHTML = `
       <div class="src-group-head">
         <input type="text" value="${escapeAttr(g.name)}" data-gi="${gi}" class="srcName">
         <button class="icon-btn removeSrcBtn" data-gi="${gi}">✕</button>
@@ -844,230 +1384,233 @@ function renderSrcGroups(){
         <label class="btn ghost small">Import Excel<input type="file" class="srcImportXLSX" data-gi="${gi}" accept=".xlsx,.xls" hidden></label>
       </div>
     `;
-    box.appendChild(div);
-  });
-  box.querySelectorAll('.srcName').forEach(inp=> inp.addEventListener('input', ()=>{
-    state.team.sourceGroups[+inp.dataset.gi].name = inp.value; renderRulesTable(); scheduleSave();
-  }));
-  box.querySelectorAll('.srcItems').forEach(ta=> ta.addEventListener('input', ()=>{
-    state.team.sourceGroups[+ta.dataset.gi].items = ta.value.split('\\n').map(s=>s.trim()).filter(Boolean);
-    scheduleSave();
-  }));
-  box.querySelectorAll('.removeSrcBtn').forEach(btn=> btn.addEventListener('click', ()=>{
-    state.team.sourceGroups.splice(+btn.dataset.gi,1);
-    renderSrcGroups(); renderRulesTable(); scheduleSave();
-  }));
-  box.querySelectorAll('.srcImportCSV').forEach(inp=> inp.addEventListener('change', (e)=>{
-    const gi = +inp.dataset.gi; const file = e.target.files[0]; if(!file) return;
-    Papa.parse(file, {complete:(res)=>{
-      const items = res.data.map(r=>r[0]).filter(Boolean);
-      state.team.sourceGroups[gi].items = state.team.sourceGroups[gi].items.concat(items);
-      renderSrcGroups(); scheduleSave();
-    }});
-    e.target.value='';
-  }));
-  box.querySelectorAll('.srcImportXLSX').forEach(inp=> inp.addEventListener('change', (e)=>{
-    const gi = +inp.dataset.gi; const file = e.target.files[0]; if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev)=>{
-      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-      const items = rows.map(r=>r[0]).filter(Boolean);
-      state.team.sourceGroups[gi].items = state.team.sourceGroups[gi].items.concat(items);
-      renderSrcGroups(); scheduleSave();
-    };
-    reader.readAsArrayBuffer(file);
-    e.target.value='';
-  }));
-}
+          box.appendChild(div);
+        });
+        box.querySelectorAll('.srcName').forEach(inp => inp.addEventListener('input', () => {
+          state.team.sourceGroups[+inp.dataset.gi].name = inp.value; renderRulesTable(); scheduleSave();
+        }));
+        box.querySelectorAll('.srcItems').forEach(ta => ta.addEventListener('input', () => {
+          state.team.sourceGroups[+ta.dataset.gi].items = ta.value.split('\\n').map(s => s.trim()).filter(Boolean);
+          scheduleSave();
+        }));
+        box.querySelectorAll('.removeSrcBtn').forEach(btn => btn.addEventListener('click', () => {
+          state.team.sourceGroups.splice(+btn.dataset.gi, 1);
+          renderSrcGroups(); renderRulesTable(); scheduleSave();
+        }));
+        box.querySelectorAll('.srcImportCSV').forEach(inp => inp.addEventListener('change', (e) => {
+          const gi = +inp.dataset.gi; const file = e.target.files[0]; if (!file) return;
+          Papa.parse(file, {
+            complete: (res) => {
+              const items = res.data.map(r => r[0]).filter(Boolean);
+              state.team.sourceGroups[gi].items = state.team.sourceGroups[gi].items.concat(items);
+              renderSrcGroups(); scheduleSave();
+            }
+          });
+          e.target.value = '';
+        }));
+        box.querySelectorAll('.srcImportXLSX').forEach(inp => inp.addEventListener('change', (e) => {
+          const gi = +inp.dataset.gi; const file = e.target.files[0]; if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+            const items = rows.map(r => r[0]).filter(Boolean);
+            state.team.sourceGroups[gi].items = state.team.sourceGroups[gi].items.concat(items);
+            renderSrcGroups(); scheduleSave();
+          };
+          reader.readAsArrayBuffer(file);
+          e.target.value = '';
+        }));
+      }
 
-document.getElementById('addSrcGroupBtn').addEventListener('click', ()=>{
-  state.team.sourceGroups.push({name:'Group '+String.fromCharCode(65+state.team.sourceGroups.length), items:[]});
-  renderSrcGroups(); renderRulesTable(); scheduleSave();
-});
+      document.getElementById('addSrcGroupBtn').addEventListener('click', () => {
+        state.team.sourceGroups.push({ name: 'Group ' + String.fromCharCode(65 + state.team.sourceGroups.length), items: [] });
+        renderSrcGroups(); renderRulesTable(); scheduleSave();
+      });
 
-document.getElementById('splitMode').addEventListener('change', (e)=>{
-  state.team.splitMode = e.target.value;
-  document.getElementById('splitValueLabel').textContent = e.target.value==='groups' ? 'Number of groups' : 'Max people / group';
-  scheduleSave();
-});
-document.getElementById('splitValue').addEventListener('input', (e)=>{ state.team.splitValue = +e.target.value||1; scheduleSave(); });
-document.getElementById('pickQuantity').addEventListener('input', (e)=>{ state.team.pickQuantity = e.target.value; scheduleSave(); });
-document.getElementById('teamNames').addEventListener('input', (e)=>{ state.team.teamNames = e.target.value; scheduleSave(); });
+      document.getElementById('splitMode').addEventListener('change', (e) => {
+        state.team.splitMode = e.target.value;
+        document.getElementById('splitValueLabel').textContent = e.target.value === 'groups' ? 'Number of groups' : 'Max people / group';
+        scheduleSave();
+      });
+      document.getElementById('splitValue').addEventListener('input', (e) => { state.team.splitValue = +e.target.value || 1; scheduleSave(); });
+      document.getElementById('pickQuantity').addEventListener('input', (e) => { state.team.pickQuantity = e.target.value; scheduleSave(); });
+      document.getElementById('teamNames').addEventListener('input', (e) => { state.team.teamNames = e.target.value; scheduleSave(); });
 
-function renderRulesTable(){
-  const tbl = document.getElementById('rulesTable');
-  if(state.team.sourceGroups.length<2){ tbl.innerHTML=''; return; }
-  let rows = '<tr><th>Source group</th><th>Count per team</th></tr>';
-  state.team.sourceGroups.forEach(g=>{
-    const val = state.team.rules[g.name] ?? '';
-    rows += `<tr><td>${g.name}</td><td><input type="number" min="0" class="ruleInput" data-name="${escapeAttr(g.name)}" value="${val}"></td></tr>`;
-  });
-  tbl.innerHTML = rows;
-  tbl.querySelectorAll('.ruleInput').forEach(inp=> inp.addEventListener('input', ()=>{
-    state.team.rules[inp.dataset.name] = inp.value===''? undefined : +inp.value;
-    scheduleSave();
-  }));
-}
+      function renderRulesTable() {
+        const tbl = document.getElementById('rulesTable');
+        if (state.team.sourceGroups.length < 2) { tbl.innerHTML = ''; return; }
+        let rows = '<tr><th>Source group</th><th>Count per team</th></tr>';
+        state.team.sourceGroups.forEach(g => {
+          const val = state.team.rules[g.name] ?? '';
+          rows += `<tr><td>${g.name}</td><td><input type="number" min="0" class="ruleInput" data-name="${escapeAttr(g.name)}" value="${val}"></td></tr>`;
+        });
+        tbl.innerHTML = rows;
+        tbl.querySelectorAll('.ruleInput').forEach(inp => inp.addEventListener('input', () => {
+          state.team.rules[inp.dataset.name] = inp.value === '' ? undefined : +inp.value;
+          scheduleSave();
+        }));
+      }
 
-function shuffle(arr){
-  const a = arr.slice();
-  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
-  return a;
-}
+      function shuffle(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; }
+        return a;
+      }
 
-document.getElementById('generateTeamsBtn').addEventListener('click', generateTeams);
+      document.getElementById('generateTeamsBtn').addEventListener('click', generateTeams);
 
-function generateTeams(){
-  const groups = state.team.sourceGroups.filter(g=>g.items.length);
-  if(!groups.length){ alert('Add at least one participant to a source group.'); return; }
+      function generateTeams() {
+        const groups = state.team.sourceGroups.filter(g => g.items.length);
+        if (!groups.length) { alert('Add at least one participant to a source group.'); return; }
 
-  let numTeams;
-  const totalParticipants = groups.reduce((s,g)=>s+g.items.length,0);
-  const cap = state.team.pickQuantity ? Math.min(+state.team.pickQuantity, totalParticipants) : totalParticipants;
+        let numTeams;
+        const totalParticipants = groups.reduce((s, g) => s + g.items.length, 0);
+        const cap = state.team.pickQuantity ? Math.min(+state.team.pickQuantity, totalParticipants) : totalParticipants;
 
-  if(state.team.splitMode==='groups'){
-    numTeams = Math.max(1, state.team.splitValue|0);
-  } else {
-    const maxSize = Math.max(1, state.team.splitValue|0);
-    numTeams = Math.max(1, Math.ceil(cap/maxSize));
-  }
+        if (state.team.splitMode === 'groups') {
+          numTeams = Math.max(1, state.team.splitValue | 0);
+        } else {
+          const maxSize = Math.max(1, state.team.splitValue | 0);
+          numTeams = Math.max(1, Math.ceil(cap / maxSize));
+        }
 
-  const names = state.team.teamNames.split(',').map(s=>s.trim()).filter(Boolean);
-  const teams = Array.from({length:numTeams},(_,i)=>({name: names[i] || ('Team '+(i+1)), members:[]}));
-  const extras = [];
+        const names = state.team.teamNames.split(',').map(s => s.trim()).filter(Boolean);
+        const teams = Array.from({ length: numTeams }, (_, i) => ({ name: names[i] || ('Team ' + (i + 1)), members: [] }));
+        const extras = [];
 
-  groups.forEach(g=>{
-    const pool = shuffle(g.items);
-    const ruleCount = state.team.rules[g.name];
-    let toDistribute;
-    if(ruleCount !== undefined && ruleCount !== null && ruleCount !== ''){
-      const needed = ruleCount*numTeams;
-      toDistribute = pool.slice(0, Math.min(needed, pool.length));
-      extras.push(...pool.slice(toDistribute.length));
-    } else {
-      toDistribute = pool;
-    }
-    let t = 0;
-    toDistribute.forEach(person=>{
-      teams[t % numTeams].members.push(person);
-      t++;
-    });
-  });
+        groups.forEach(g => {
+          const pool = shuffle(g.items);
+          const ruleCount = state.team.rules[g.name];
+          let toDistribute;
+          if (ruleCount !== undefined && ruleCount !== null && ruleCount !== '') {
+            const needed = ruleCount * numTeams;
+            toDistribute = pool.slice(0, Math.min(needed, pool.length));
+            extras.push(...pool.slice(toDistribute.length));
+          } else {
+            toDistribute = pool;
+          }
+          let t = 0;
+          toDistribute.forEach(person => {
+            teams[t % numTeams].members.push(person);
+            t++;
+          });
+        });
 
-  // apply overall pick quantity cap by trimming extras off the end evenly (best-effort)
-  let allMembers = teams.reduce((s,t)=>s+t.members.length,0);
-  while(state.team.pickQuantity && allMembers > +state.team.pickQuantity){
-    const t = teams.reduce((maxT,t)=> t.members.length>maxT.members.length?t:maxT, teams[0]);
-    extras.push(t.members.pop());
-    allMembers--;
-  }
+        // apply overall pick quantity cap by trimming extras off the end evenly (best-effort)
+        let allMembers = teams.reduce((s, t) => s + t.members.length, 0);
+        while (state.team.pickQuantity && allMembers > +state.team.pickQuantity) {
+          const t = teams.reduce((maxT, t) => t.members.length > maxT.members.length ? t : maxT, teams[0]);
+          extras.push(t.members.pop());
+          allMembers--;
+        }
 
-  state.team.lastResult = {teams, extras};
-  renderTeamResults();
-  scheduleSave();
-}
+        state.team.lastResult = { teams, extras };
+        renderTeamResults();
+        scheduleSave();
+      }
 
-function renderTeamResults(){
-  const box = document.getElementById('teamResults');
-  const extrasBox = document.getElementById('extrasBox');
-  const res = state.team.lastResult;
-  if(!res){ box.innerHTML=''; extrasBox.innerHTML=''; return; }
-  box.innerHTML = res.teams.map(t=>`
+      function renderTeamResults() {
+        const box = document.getElementById('teamResults');
+        const extrasBox = document.getElementById('extrasBox');
+        const res = state.team.lastResult;
+        if (!res) { box.innerHTML = ''; extrasBox.innerHTML = ''; return; }
+        box.innerHTML = res.teams.map(t => `
     <div class="team-card">
       <h3>${t.name}</h3>
-      <ul>${t.members.map(m=>`<li>${m}</li>`).join('') || '<li class="muted">— empty —</li>'}</ul>
+      <ul>${t.members.map(m => `<li>${m}</li>`).join('') || '<li class="muted">— empty —</li>'}</ul>
     </div>
   `).join('');
-  extrasBox.innerHTML = res.extras.length ? `<div class="ticket" style="margin-top:14px;"><h2>Extras</h2><p>${res.extras.join(', ')}</p></div>` : '';
-}
+        extrasBox.innerHTML = res.extras.length ? `<div class="ticket" style="margin-top:14px;"><h2>Extras</h2><p>${res.extras.join(', ')}</p></div>` : '';
+      }
 
-/* ---- exports ---- */
-document.getElementById('exportImgBtn').addEventListener('click', ()=>{
-  const target = document.getElementById('resultsExportTarget');
-  const w = 900;
-  const cards = target.querySelectorAll('.team-card');
-  const h = 140 + Math.ceil(cards.length/3)*160 + 60;
-  const c = document.createElement('canvas'); c.width=w; c.height=Math.max(h,300);
-  const cx = c.getContext('2d');
-  cx.fillStyle = '#171310'; cx.fillRect(0,0,c.width,c.height);
-  cx.fillStyle = '#c9a24b'; cx.font='bold 28px sans-serif'; cx.fillText('Team Results', 24, 44);
-  let x=24,y=90,colW=280;
-  cards.forEach((card,i)=>{
-    if(i>0 && i%3===0){ x=24; y+=150; }
-    cx.strokeStyle='#8a7038'; cx.strokeRect(x,y,colW-16,130);
-    cx.fillStyle='#c9a24b'; cx.font='bold 16px sans-serif';
-    cx.fillText(card.querySelector('h3').textContent, x+12, y+26);
-    cx.fillStyle='#f3ead8'; cx.font='13px sans-serif';
-    Array.from(card.querySelectorAll('li')).forEach((li,li_i)=>{
-      cx.fillText('• '+li.textContent, x+12, y+48+li_i*17);
-    });
-    x += colW;
-  });
-  const a = document.createElement('a');
-  a.download = 'team-results.png';
-  a.href = c.toDataURL('image/png');
-  a.click();
-});
+      /* ---- exports ---- */
+      document.getElementById('exportImgBtn').addEventListener('click', () => {
+        const target = document.getElementById('resultsExportTarget');
+        const w = 900;
+        const cards = target.querySelectorAll('.team-card');
+        const h = 140 + Math.ceil(cards.length / 3) * 160 + 60;
+        const c = document.createElement('canvas'); c.width = w; c.height = Math.max(h, 300);
+        const cx = c.getContext('2d');
+        cx.fillStyle = '#171310'; cx.fillRect(0, 0, c.width, c.height);
+        cx.fillStyle = '#c9a24b'; cx.font = 'bold 28px sans-serif'; cx.fillText('Team Results', 24, 44);
+        let x = 24, y = 90, colW = 280;
+        cards.forEach((card, i) => {
+          if (i > 0 && i % 3 === 0) { x = 24; y += 150; }
+          cx.strokeStyle = '#8a7038'; cx.strokeRect(x, y, colW - 16, 130);
+          cx.fillStyle = '#c9a24b'; cx.font = 'bold 16px sans-serif';
+          cx.fillText(card.querySelector('h3').textContent, x + 12, y + 26);
+          cx.fillStyle = '#f3ead8'; cx.font = '13px sans-serif';
+          Array.from(card.querySelectorAll('li')).forEach((li, li_i) => {
+            cx.fillText('• ' + li.textContent, x + 12, y + 48 + li_i * 17);
+          });
+          x += colW;
+        });
+        const a = document.createElement('a');
+        a.download = 'team-results.png';
+        a.href = c.toDataURL('image/png');
+        a.click();
+      });
 
-document.getElementById('exportXlsxBtn').addEventListener('click', ()=>{
-  const res = state.team.lastResult;
-  if(!res){ alert('Generate groups first.'); return; }
-  const rows = [['Team','Member']];
-  res.teams.forEach(t=> t.members.forEach(m=> rows.push([t.name,m])));
-  if(res.extras.length) res.extras.forEach(m=> rows.push(['Extras', m]));
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Teams');
-  XLSX.writeFile(wb, 'team-results.xlsx');
-});
+      document.getElementById('exportXlsxBtn').addEventListener('click', () => {
+        const res = state.team.lastResult;
+        if (!res) { alert('Generate groups first.'); return; }
+        const rows = [['Team', 'Member']];
+        res.teams.forEach(t => t.members.forEach(m => rows.push([t.name, m])));
+        if (res.extras.length) res.extras.forEach(m => rows.push(['Extras', m]));
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Teams');
+        XLSX.writeFile(wb, 'team-results.xlsx');
+      });
 
-document.getElementById('exportPdfBtn').addEventListener('click', ()=>{
-  if(!state.team.lastResult){ alert('Generate groups first.'); return; }
-  const printWin = window.open('', '_blank');
-  const cardsHtml = document.getElementById('teamResults').outerHTML;
-  printWin.document.write(`<html><head><title>Team Results</title><style>
+      document.getElementById('exportPdfBtn').addEventListener('click', () => {
+        if (!state.team.lastResult) { alert('Generate groups first.'); return; }
+        const printWin = window.open('', '_blank');
+        const cardsHtml = document.getElementById('teamResults').outerHTML;
+        printWin.document.write(`<html><head><title>Team Results</title><style>
     body{font-family:sans-serif;padding:24px;} .team-results{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
     .team-card{border:1px solid #999;border-radius:8px;padding:12px;} h3{margin:0 0 8px;}
   </style></head><body><h1>Team Results</h1>${cardsHtml}</body></html>`);
-  printWin.document.close();
-  printWin.focus();
-  setTimeout(()=> printWin.print(), 300);
-});
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(() => printWin.print(), 300);
+      });
 
-/* ============================= RENDER ALL ============================= */
-function renderAll(){
-  renderPresetChips();
-  document.getElementById('optWeighted').checked = state.weighted;
-  document.getElementById('repeatMode').value = state.repeatMode;
-  document.getElementById('optMultiStage').checked = state.multiStage;
-  document.getElementById('stageManager').classList.toggle('hidden', !state.multiStage);
-  renderStageManager();
-  renderEntryList();
-  drawWheel();
-  renderHistory();
-  document.getElementById('resultBanner').classList.add('hidden');
+      /* ============================= RENDER ALL ============================= */
+      function renderAll() {
+        renderPresetChips();
+        document.getElementById('optWeighted').checked = state.weighted;
+        document.getElementById('repeatMode').value = state.repeatMode;
+        document.getElementById('optMultiStage').checked = state.multiStage;
+        document.getElementById('stageManager').classList.toggle('hidden', !state.multiStage);
+        renderStageManager();
+        renderEntryList();
+        drawWheel();
+        renderHistory();
+        document.getElementById('resultBanner').classList.add('hidden');
 
-  document.getElementById('splitMode').value = state.team.splitMode;
-  document.getElementById('splitValue').value = state.team.splitValue;
-  document.getElementById('pickQuantity').value = state.team.pickQuantity;
-  document.getElementById('teamNames').value = state.team.teamNames;
-  renderSrcGroups();
-  renderRulesTable();
-  renderTeamResults();
-}
+        document.getElementById('splitMode').value = state.team.splitMode;
+        document.getElementById('splitValue').value = state.team.splitValue;
+        document.getElementById('pickQuantity').value = state.team.pickQuantity;
+        document.getElementById('teamNames').value = state.team.teamNames;
+        renderSrcGroups();
+        renderRulesTable();
+        renderTeamResults();
+      }
 
-/* ============================= INIT ============================= */
-(async function init(){
-  const sid = paramSessionId();
-  if(sid){
-    await enterViewerMode(sid);
-  } else {
-    await loadState();
-  }
-  renderAll();
-})();
-})();
-</script>
+      /* ============================= INIT ============================= */
+      (async function init() {
+        const sid = paramSessionId();
+        if (sid) {
+          await enterViewerMode(sid);
+        } else {
+          await loadState();
+        }
+        renderAll();
+      })();
+    })();
+  </script>
 </body>
+
 </html>
